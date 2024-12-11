@@ -60,18 +60,30 @@ function App() {
     }
   }
 
-  // const handleSubmit = async (event) => {
-  //   event.preventDefault();
-  //   const res = await fetch(`${BASE_URL}/get-token`, {
-  //     method: 'GET'
-  //   });
-  //   const data = await res.json();
-  //   if (!res.ok) {
-  //     console.log('Error:', data);
-  //     return;
-  //   }
-  //   console.log(data);
-  // }
+  const handleCreateOrder = async (data) => {
+    console.log('order created ====> ', data);
+    const res = await fetch(`${BASE_URL}/create-paypal-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(cart), // share order data with backend for price calculation
+    });
+
+    const result = await res.json();
+    if (!res.ok) {
+      console.log('Error:', result);
+      return;
+    }
+    const order = result?.order;
+    if (order) return order.id; // expected from Paypal
+  }
+
+  const handleApprove = (data) => {
+    console.log('approved ====> ', data);
+    // send approved data to backend
+    // handle success or failure case
+  }
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -142,18 +154,22 @@ function App() {
               justifyContent: 'center'
             }}
           >
-            {/* <button
-              style={{ padding: 10 }}
-              onClick={handleSubmit}
+            <PayPalScriptProvider
+              options={{
+                clientId: REACT_APP_PAYPAL_CLIENT,
+                currency: "USD",
+                intent: "capture",
+              }}
+              style={{ alignSelf: 'center' }}
             >
-              Paypal
-            </button> */}
-            <PayPalScriptProvider options={{
-              clientId: REACT_APP_PAYPAL_CLIENT,
-              currency: "USD",
-              intent: "capture"
-            }}>
-              <PayPalButtons style={{ layout: "horizontal" }} />
+              <PayPalButtons
+                createOrder={handleCreateOrder}
+                onApprove={handleApprove}
+                onError={() => { }}
+                onCancel={() => { }}
+                // ... methods for various actions 
+                style={{ layout: "horizontal", alignSelf: 'center' }}
+              />
             </PayPalScriptProvider>
           </div>
           : null

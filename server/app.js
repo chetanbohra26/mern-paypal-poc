@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { default: axios } = require('axios');
+const { ulid } = require('ulid');
 
 require('dotenv').config();
 
@@ -30,7 +31,7 @@ app.get('/products', (req, res) => {
   res.json({ success: true, data: products });
 });
 
-app.get('/get-token', async (req, res) => {
+const getToken = async () => {
   try {
     const result = await axios({
       url: `${process.env.PAYPAL_URL}/v1/oauth2/token`,
@@ -48,11 +49,43 @@ app.get('/get-token', async (req, res) => {
     });
 
     console.log(result.data);
-
-    return res.json({ success: true, token: result?.data?.access_token })
+    return result.data?.access_token;
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ success: false });
+    throw err;
+  }
+};
+
+app.post('/create-paypal-order', async (req, res) => {
+  const amount = 100;
+  currency = 'USD';
+
+  try {
+    const token = await getToken();
+    const result = await axios({
+      url: `${process.env.PAYPAL_URL}/v2/checkout/orders`,
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      data: {
+        intent: "CAPTURE",
+        purchase_units: [
+          {
+            reference_id: ulid(),
+            "amount": {
+              "currency_code": currency,
+              "value": amount
+            }
+          }
+        ]
+      }
+    });
+
+    res.json({ success: true, order: result?.data, amount, currency });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false })
   }
 });
 
