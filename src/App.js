@@ -164,10 +164,10 @@ function App() {
             >
               <PayPalButtons
                 createOrder={handleCreateOrder}
-                onApprove={handleApprove}
-                onError={() => { }}
-                onCancel={() => { }}
                 // ... methods for various actions 
+                onApprove={handleApprove}
+                onError={(data) => { console.log('error:', data) }}
+                onCancel={(data) => { console.log('cancel:', data) }}
                 style={{ layout: "horizontal", alignSelf: 'center' }}
               />
             </PayPalScriptProvider>
